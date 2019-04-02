@@ -78,7 +78,7 @@
                             var maker = new google.maps.Marker({
                                         position: position,
                                         map: map,
-                                        icon: "http://icons.iconarchive.com/icons/hopstarter/sleek-xp-basic/32/Home-icon.png",
+                                        icon: "http://icons.iconarchive.com/icons/custom-icon-design/mono-general-3/32/home-icon.png",
                                         title: item.旅館名稱
                                         });
                         }
@@ -99,7 +99,7 @@
                             var maker = new google.maps.Marker({
                                         position: position,
                                         map: map,
-                                        icon: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/32/Map-Marker-Marker-Outside-Azure-icon.png",
+                                        icon: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/32/Map-Marker-Marker-Outside-Chartreuse-icon.png",
                                         title: item.古蹟名稱
                                         });
                         }
@@ -108,33 +108,39 @@
         }
 
         function calculateAndDisplayRoute(directionsService, directionsDisplay) {
-            var start;
-            var end;
+            var waypts = [];
+            var first = true;
             var hotelSelectArray = document.getElementById('hotel_select');
+            var placeSelectArray = document.getElementById('place_select');
             for (var i = 0; i < hotelSelectArray.length; i++) {
                 if (hotelSelectArray.options[i].selected) {
-                    start = {
-                        location: hotelSelectArray[i].value,
-                        stopover: true
-                    };
+                    if(!first) {
+                        waypts.push({
+                            location: hotelSelectArray[i].value,
+                            stopover: true
+                        });
+                    }
+                    first = false;
                 }
             }
-            var placeSelectArray = document.getElementById('place_select');
+            first = true;
             for (var i = 0; i < placeSelectArray.length; i++) {
                 if (placeSelectArray.options[i].selected) {
-                    end = {
-                        location: hotelSelectArray[i].value,
-                        stopover: true
-                    };
+                    if(!first) {
+                        waypts.push({
+                            location: placeSelectArray.options[i].value,
+                            stopover: true
+                        });
+                    }
+                    first = false;
                 }
             }
-            console.log(start);
-            console.log(end);
+            console.log(waypts);
             
             directionsService.route({
-                origin: start.location,
-                destination: end.location,
-                //waypoints: waypts,
+                origin: document.getElementById('hotel_select').value,
+                destination: document.getElementById('place_select').value,
+                waypoints: waypts,
                 optimizeWaypoints: true,
                 travelMode: 'DRIVING'
             }, function (response, status) {
