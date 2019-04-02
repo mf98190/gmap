@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>新竹景點規劃</title>
+    <style>
+            #map {
+                height: 500px;
+                width: 100%;
+                /* border: red 1px solid; */
+            }
+            .form-group {
+                width: 250px;
+            }
+            #hotel .form-control {
+                height: 130px;
+            }
+            #place .form-control {
+                height: 230px;
+            }
+        </style>
+  </head>
+  <body>
+    <h2 class="text-center my-4">新竹景點規劃</h2>
+    <div class="d-flex">
+        <div id="map" class="mx-3"></div>
+        <div class="mr-3 data-list">
+            <div id="hotel" class="form-group">
+                <label for="exampleFormControlSelect2">旅館</label>
+                <select multiple class="form-control" id="hotel_select">
+                </select>
+            </div>
+            <div id="place" class="form-group">
+                    <label for="exampleFormControlSelect2">景點</label>
+                    <select multiple class="form-control" id="place_select">
+                    </select>
+            </div>
+            <button id="submit" type="button" class="btn btn-light">規劃路線</button>
+        </div>
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script>
+        function initMap() {
+            var directionsService = new google.maps.DirectionsService;
+            var directionsDisplay = new google.maps.DirectionsRenderer;
+            var center = {lat: 24.806387, lng: 120.966394};
+            var map = new google.maps.Map(
+                document.getElementById("map"), {zoom: 15, center: center});
+                directionsDisplay.setMap(map);
+                document.getElementById('submit').addEventListener('click', function() {
+                    calculateAndDisplayRoute(directionsService, directionsDisplay);
+                });
+
+                var url_hotel = "http://opendata.hccg.gov.tw/dataset/39ee314b-7ce7-4265-a6b5-b57f42392da8/resource/6a3a5f61-5383-419d-a94c-df710071a51e/download/20180321131425502.json";
+                var url_place = "http://opendata.hccg.gov.tw/dataset/7ea7e303-df62-4fbe-a84f-99bdd724b577/resource/c15a9c5f-f6cb-4da5-b8a6-5e7bc4c9eb08/download/20180501160733080.json";
+
+                $.ajax({
+                    type: "get",
+                    url: url_hotel,
+                    dataType: "json",
+                    success: function (data) {
+                        console.log(data);
+                        for(var item of data){
+                            $("<option></option>")
+                            .html(item.旅館名稱)
+                            .appendTo("#hotel_select");
+                            
+                            var position = {lat: parseFloat(item.緯度), lng: parseFloat(item.經度)};
+                            var maker = new google.maps.Marker({
+                                        position: position,
+                                        map: map,
+                                        icon: "http://icons.iconarchive.com/icons/hopstarter/sleek-xp-basic/32/Home-icon.png",
+                                        title: item.旅館名稱
+                                        });
+                        }
+                    }
+                });
+                $.ajax({
+                    type: "get",
+                    url: url_place,
+                    dataType: "json",
+                    success: function (data) {
+                        console.log(data);
+                        for(var item of data){
+                            $("<option></option>")
+                            .html(item.古蹟名稱)
+                            .appendTo("#place_select");
+                            
+                            var position = {lat: parseFloat(item.緯度), lng: parseFloat(item.經度)};
+                            var maker = new google.maps.Marker({
+                                        position: position,
+                                        map: map,
+                                        icon: "http://icons.iconarchive.com/icons/icons-land/vista-map-markers/32/Map-Marker-Marker-Outside-Azure-icon.png",
+                                        title: item.古蹟名稱
+                                        });
+                        }
+                    }
+                });
+        }
+
+        function calculateAndDisplayRoute(directionsService, directionsDisplay) {
+            var start;
+            var end;
+            var hotelSelectArray = document.getElementById('hotel_select');
+            for (var i = 0; i < hotelSelectArray.length; i++) {
+                if (hotelSelectArray.options[i].selected) {
+                    start = {
+                        location: hotelSelectArray[i].value,
+                        stopover: true
+                    };
+                }
+            }
+            var placeSelectArray = document.getElementById('place_select');
+            for (var i = 0; i < placeSelectArray.length; i++) {
+                if (placeSelectArray.options[i].selected) {
+                    end = {
+                        location: hotelSelectArray[i].value,
+                        stopover: true
+                    };
+                }
+            }
+            console.log(start);
+            console.log(end);
+            
+            directionsService.route({
+                origin: start.location,
+                destination: end.location,
+                //waypoints: waypts,
+                optimizeWaypoints: true,
+                travelMode: 'DRIVING'
+            }, function (response, status) {
+                if (status === 'OK') {
+                    directionsDisplay.setDirections(response);
+                    var route = response.routes[0];
+                    // var summaryPanel = document.getElementById('directions-panel');
+                    // summaryPanel.innerHTML = '';
+                    // // For each route, display summary information.
+                    // for (var i = 0; i < route.legs.length; i++) {
+                    //     var routeSegment = i + 1;
+                    //     summaryPanel.innerHTML += '<b>Route Segment: ' + routeSegment +
+                    //         '</b><br>';
+                    //     summaryPanel.innerHTML += route.legs[i].start_address + ' to ';
+                    //     summaryPanel.innerHTML += route.legs[i].end_address + '<br>';
+                    //     summaryPanel.innerHTML += route.legs[i].distance.text + '<br><br>';
+                    // }
+                } else {
+                    window.alert('Directions request failed due to ' + status);
+                }
+            });
+        }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8_leVd8LRKxvNf0wUTOpr8J8PP6P5GTI&callback=initMap">
+    </script>
+  </body>
+</html>
